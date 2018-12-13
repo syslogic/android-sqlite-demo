@@ -101,9 +101,9 @@ public class SqliteBaseHelper extends SQLiteOpenHelper {
 
         try {
             if(methodId == 0) {
-                sql = "UPDATE " + TABLE_SQLITE_SEQUENCE + " SET seq = 0 WHERE name = \"" + tableName + "\";";
+                sql = "UPDATE " + TABLE_SQLITE_SEQUENCE + " SET seq=0 WHERE name=\"" + tableName + "\";";
             } else {
-                sql = "DELETE FROM " + TABLE_SQLITE_SEQUENCE + " WHERE name = \"" + tableName + "\";";
+                sql = "DELETE FROM " + TABLE_SQLITE_SEQUENCE + " WHERE name=\"" + tableName + "\";";
             }
             db.execSQL(sql);
 
@@ -118,7 +118,7 @@ public class SqliteBaseHelper extends SQLiteOpenHelper {
     public void getAutoIncrement(SQLiteDatabase db, String tableName) {
         int value = -1;
         try {
-            Cursor cursor = db.rawQuery("SELECT seq FROM " + TABLE_SQLITE_SEQUENCE + " WHERE name = \"" + tableName + "\";", null);
+            Cursor cursor = db.rawQuery("SELECT seq FROM " + TABLE_SQLITE_SEQUENCE + " WHERE name=\"" + tableName + "\";", null);
             if (cursor.moveToFirst()) {value = cursor.getInt(0);}
             if (! cursor.isClosed()) {cursor.close();}
         } catch(SQLiteException e){
