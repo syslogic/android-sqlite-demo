@@ -114,7 +114,7 @@ public class SqliteBaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    /* returns -1 while no new records where inserted */
+    /* returns -1 when no auto-increment record exists for the tableName */
     public void getAutoIncrement(SQLiteDatabase db, String tableName) {
         int value = -1;
         try {
