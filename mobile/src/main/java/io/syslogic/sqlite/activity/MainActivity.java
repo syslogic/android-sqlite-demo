@@ -2,6 +2,9 @@ package io.syslogic.sqlite.activity;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteException;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,11 +17,17 @@ import android.webkit.WebViewClient;
 
 import androidx.annotation.IdRes;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Room;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import androidx.sqlite.db.SupportSQLiteOpenHelper;
 import io.syslogic.sqlite.BuildConfig;
 import io.syslogic.sqlite.R;
 import io.syslogic.sqlite.database.SqliteBaseHelper;
+import io.syslogic.sqlite.database.db.Abstraction;
 import io.syslogic.sqlite.interfaces.ILogReceiver;
+
+import static io.syslogic.sqlite.database.SqliteBaseHelper.TABLE_ATTACHMENTS;
 
 public class MainActivity extends AppCompatActivity implements ILogReceiver {
 
@@ -35,32 +44,103 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
         this.setWebView(R.id.sqlite_logs);
     }
 
-    @Override
-    public void onMessage(final String message) {
-        Log.d(LOG_TAG, message);
-        if(this.mLogView != null) {
-            this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    evalScript(mLogView, getJavaScript(MainActivity.sequence, message));
-                    MainActivity.sequence ++;
-                }
-            });
+    /* when deleting the records, it works - else it accumulates the ROWID */
+    private void performSqliteTest(boolean deleteRecords, int methodId) {
+
+        SqliteBaseHelper db = SqliteBaseHelper.getInstance(this, this);
+
+        db.insertSampleRecords(db.getWritableDatabase(),100);
+        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+
+        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, deleteRecords, methodId);
+        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+
+        db.insertSampleRecords(db.getWritableDatabase(),50);
+        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+
+        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, deleteRecords, methodId);
+        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+
+        db.insertSampleRecords(db.getWritableDatabase(),25);
+        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+
+        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, deleteRecords, methodId);
+        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+    }
+
+    /* when deleting the records, it works - else it accumulates the ROWID */
+    private void performRoomDbTest(boolean deleteRecords, int methodId) {
+
+        Abstraction room = Abstraction.getAbstraction(this);
+        SupportSQLiteOpenHelper helper = room.getOpenHelper();
+        SupportSQLiteDatabase db = helper.getWritableDatabase();
+        int autoIncrement;
+
+        this.insertSampleRecords(db,100);
+        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
+        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
+
+        this.resetAutoIncrement(db, TABLE_ATTACHMENTS, deleteRecords, methodId);
+        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
+        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
+
+        this.insertSampleRecords(db, 50);
+        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
+        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
+
+        this.resetAutoIncrement(db, TABLE_ATTACHMENTS, deleteRecords, methodId);
+        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
+        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
+
+        this.insertSampleRecords(db, 25);
+        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
+        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
+
+        this.resetAutoIncrement(db, TABLE_ATTACHMENTS, deleteRecords, methodId);
+        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
+        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
+
+        helper.close();
+    }
+
+    public void insertSampleRecords(SupportSQLiteDatabase db, int itemCount) {
+        String sql;
+        try {
+            for(int i=0; i < itemCount; i++) {
+                sql = "INSERT INTO " + TABLE_ATTACHMENTS + " (" + SqliteBaseHelper.KEY_ATTACHMENT_NAME + ") VALUES (\"Attachment " + String.valueOf(i+1) + "\")";
+                db.execSQL(sql);
+            }
+        } catch(Exception e){
+            this.onException(e);
+        } finally {
+            this.onMessage("sample records added: " + String.valueOf(itemCount) + ".");
         }
     }
 
-    @Override
-    public
-    void onException(final Exception e) {
-        Log.d(LOG_TAG, e.getMessage());
-        if(this.mLogView != null) {
-            this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    evalScript(mLogView, getJavaScript(MainActivity.sequence, e.getMessage()));
-                    MainActivity.sequence ++;
-                }
-            });
+    public void resetAutoIncrement(SupportSQLiteDatabase db, String tableName, boolean deleteRecords, int methodId) {
+        String sql = null;
+        if(deleteRecords) {
+            try {
+                sql = "DELETE FROM " + tableName + ";";
+                db.execSQL(sql);
+            } catch (android.database.SQLException e) {
+                this.onException(e);
+            } finally {
+                this.onMessage(sql);
+            }
+        }
+        try {
+            if(methodId == 0) {
+                sql = "UPDATE " + SqliteBaseHelper.TABLE_SQLITE_SEQUENCE + " SET seq=0 WHERE name=\"" + tableName + "\";";
+            } else {
+                sql = "DELETE FROM " + SqliteBaseHelper.TABLE_SQLITE_SEQUENCE + " WHERE name=\"" + tableName + "\";";
+            }
+            db.execSQL(sql);
+
+        } catch(android.database.SQLException e){
+            this.onException(e);
+        } finally {
+            this.onMessage(sql);
         }
     }
 
@@ -69,8 +149,8 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
 
         /* creating a WebView with JavaScript enabled */
         this.mLogView = this.findViewById(resId);
-        this.mLogView.getSettings().setAllowFileAccessFromFileURLs(true);
         this.mLogView.getSettings().setJavaScriptEnabled(true);
+        this.mLogView.getSettings().setAllowFileAccess(true);
 
         String html = "<html><head>" + this.getStyles() + "</head><body><ul id=\"logs\" class=\"logs\"></ul></body><html>";
         this.mLogView.loadDataWithBaseURL("file:///android_asset/", html, "text/HTML", "UTF-8", null);
@@ -101,38 +181,15 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
             @Override
             public void onPageFinished(WebView view, String url) {
 
-                /* when deleting the records, it works */
+                /* SQLiteDatabase */
                 performSqliteTest( true,0);
                 performSqliteTest( true,1);
 
-                /* when not deleting the records, it accumulates the ROWID */
-                // performSqliteTest(false,0);
-                // performSqliteTest(false,1);
+                /* SupportSQLiteDatabase */
+                performRoomDbTest(true,0);
+                performRoomDbTest(true,1);
             }
         });
-    }
-
-    private void performSqliteTest(boolean deleteRecords, int methodId) {
-
-        SqliteBaseHelper db = SqliteBaseHelper.getInstance(this, this);
-
-        db.insertSampleRecords(db.getWritableDatabase(),100);
-        db.getAutoIncrement(db.getWritableDatabase(), SqliteBaseHelper.TABLE_ATTACHMENTS);
-
-        db.resetAutoIncrement(db.getWritableDatabase(), SqliteBaseHelper.TABLE_ATTACHMENTS, deleteRecords, methodId);
-        db.getAutoIncrement(db.getWritableDatabase(), SqliteBaseHelper.TABLE_ATTACHMENTS);
-
-        db.insertSampleRecords(db.getWritableDatabase(),50);
-        db.getAutoIncrement(db.getWritableDatabase(), SqliteBaseHelper.TABLE_ATTACHMENTS);
-
-        db.resetAutoIncrement(db.getWritableDatabase(), SqliteBaseHelper.TABLE_ATTACHMENTS, deleteRecords, methodId);
-        db.getAutoIncrement(db.getWritableDatabase(), SqliteBaseHelper.TABLE_ATTACHMENTS);
-
-        db.insertSampleRecords(db.getWritableDatabase(),25);
-        db.getAutoIncrement(db.getWritableDatabase(), SqliteBaseHelper.TABLE_ATTACHMENTS);
-
-        db.resetAutoIncrement(db.getWritableDatabase(), SqliteBaseHelper.TABLE_ATTACHMENTS, deleteRecords, methodId);
-        db.getAutoIncrement(db.getWritableDatabase(), SqliteBaseHelper.TABLE_ATTACHMENTS);
     }
 
     /** CSS Generation */
@@ -157,19 +214,45 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
 
     /** returns an auto-invoking JS function */
     protected String getJavaScript(int sequence, String message) {
-
-        String script = "(function(){" +
+        return "(function(){" +
             "var ul = document.getElementById(\"logs\");" +
             "var li = document.createElement(\"li\");" +
             "li.id = \"log_entry_" + String.valueOf(sequence) + "\";" +
             "li.innerHTML = \'"  + message + "\'; ul.appendChild(li);})();";
-
-        Log.i("chromium", script);
-        return script;
     }
 
     /** Script Execution Wrapper */
     protected void evalScript(WebView webview, String script) {
         webview.loadUrl("javascript:" + script);
+    }
+
+
+    @Override
+    public void onMessage(final String message) {
+        Log.d(LOG_TAG, message);
+        if(this.mLogView != null) {
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    evalScript(mLogView, getJavaScript(MainActivity.sequence, message));
+                    MainActivity.sequence ++;
+                }
+            });
+        }
+    }
+
+    @Override
+    public
+    void onException(final Exception e) {
+        Log.d(LOG_TAG, e.getMessage());
+        if(this.mLogView != null) {
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    evalScript(mLogView, getJavaScript(MainActivity.sequence, e.getMessage()));
+                    MainActivity.sequence ++;
+                }
+            });
+        }
     }
 }

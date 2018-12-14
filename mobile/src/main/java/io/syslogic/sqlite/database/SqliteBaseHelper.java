@@ -19,16 +19,17 @@ public class SqliteBaseHelper extends SQLiteOpenHelper {
     private static SQLiteDatabase db;
 
     /** Constants */
-    private static final String DATABASE_NAME         = "room.db";
-    private static final int DATABASE_VERSION         = 1;
+    private static final String DATABASE_NAME            = "local.db";
+    private static final int DATABASE_VERSION            = 1;
 
     /** Tables */
-    private static final String TABLE_SQLITE_SEQUENCE = "sqlite_sequence";
-    public static final String TABLE_ATTACHMENTS      = "attachment";
+    public static final String TABLE_SQLITE_SEQUENCE     = "sqlite_sequence";
+    public static final String KEY_SQLITE_SEQUENCE_NAME  = "name";
+    public static final String KEY_SQLITE_SEQUENCE_VALUE = "seq";
 
-    /** Columns */
-    public static final String KEY_ATTACHMENT_ID      = "attachment_id";
-    public static final String KEY_ATTACHMENT_NAME    = "attachment_name";
+    public static final String TABLE_ATTACHMENTS         = "attachment";
+    public static final String KEY_ATTACHMENT_ID         = "attachment_id";
+    public static final String KEY_ATTACHMENT_NAME       = "attachment_name";
 
     private ILogReceiver mListener;
 
@@ -114,7 +115,7 @@ public class SqliteBaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    /* returns -1 when no auto-increment record exists for the tableName */
+    /* returns -1 when no auto-increment record can be obtained for the tableName */
     public void getAutoIncrement(SQLiteDatabase db, String tableName) {
         int value = -1;
         try {
