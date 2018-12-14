@@ -19,11 +19,10 @@ import androidx.sqlite.db.SupportSQLiteOpenHelper;
 
 import io.syslogic.sqlite.BuildConfig;
 import io.syslogic.sqlite.R;
-import io.syslogic.sqlite.database.SqliteBaseHelper;
+import io.syslogic.sqlite.constants.Constants;
+import io.syslogic.sqlite.database.legacy.MaintenanceHelper;
 import io.syslogic.sqlite.database.db.Abstraction;
 import io.syslogic.sqlite.interfaces.ILogReceiver;
-
-import static io.syslogic.sqlite.database.SqliteBaseHelper.TABLE_ATTACHMENTS;
 
 public class MainActivity extends AppCompatActivity implements ILogReceiver {
 
@@ -43,25 +42,25 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
     /* it works when deleting the records, else it accumulates the ROWID */
     private void performSqliteTest(int methodId) {
 
-        SqliteBaseHelper db = SqliteBaseHelper.getInstance(this, this);
+        MaintenanceHelper db = MaintenanceHelper.getInstance(this, this);
 
         db.insertSampleRecords(db.getWritableDatabase(),100);
-        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+        db.getAutoIncrement(db.getWritableDatabase(), Constants.TABLE_ATTACHMENTS);
 
-        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, true, methodId);
-        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+        db.resetAutoIncrement(db.getWritableDatabase(), Constants.TABLE_ATTACHMENTS, methodId);
+        db.getAutoIncrement(db.getWritableDatabase(), Constants.TABLE_ATTACHMENTS);
 
         db.insertSampleRecords(db.getWritableDatabase(),50);
-        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+        db.getAutoIncrement(db.getWritableDatabase(), Constants.TABLE_ATTACHMENTS);
 
-        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, true, methodId);
-        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+        db.resetAutoIncrement(db.getWritableDatabase(), Constants.TABLE_ATTACHMENTS, methodId);
+        db.getAutoIncrement(db.getWritableDatabase(), Constants.TABLE_ATTACHMENTS);
 
         db.insertSampleRecords(db.getWritableDatabase(),25);
-        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+        db.getAutoIncrement(db.getWritableDatabase(), Constants.TABLE_ATTACHMENTS);
 
-        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, true, methodId);
-        db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
+        db.resetAutoIncrement(db.getWritableDatabase(), Constants.TABLE_ATTACHMENTS, methodId);
+        db.getAutoIncrement(db.getWritableDatabase(), Constants.TABLE_ATTACHMENTS);
     }
 
     /* SupportSQLiteDatabase does not cut it ... */
@@ -74,11 +73,12 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
         this.insertSampleRecords(db, 25);
     }
 
+    /* uses SupportSQLiteDatabase */
     public void insertSampleRecords(SupportSQLiteDatabase db, int itemCount) {
         String sql;
         try {
             for(int i=0; i < itemCount; i++) {
-                sql = "INSERT INTO " + TABLE_ATTACHMENTS + " (" + SqliteBaseHelper.KEY_ATTACHMENT_NAME + ") VALUES (\"Attachment " + String.valueOf(i+1) + "\")";
+                sql = "INSERT INTO " + Constants.TABLE_ATTACHMENTS + " (" + Constants.KEY_ATTACHMENT_NAME + ") VALUES (\"Attachment " + String.valueOf(i+1) + "\")";
                 db.execSQL(sql);
             }
         } catch(Exception e){
@@ -125,12 +125,12 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
             @Override
             public void onPageFinished(WebView view, String url) {
 
-                /* SupportSQLiteDatabase - doesn't work */
+                /* SupportSQLiteDatabase - it cannot DELETE or UPDATE sqlite_sequence; only SELECT works */
                 performRoomDbTest();
 
-                /* SQLiteDatabase - works */
+                /* SQLiteDatabase - it just works */
                 performSqliteTest(0);
-                // performSqliteTest(1);
+                performSqliteTest(1);
             }
         });
     }
@@ -178,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
                 @Override
                 public void run() {
                     evalScript(mLogView, getJavaScript(MainActivity.sequence, message));
-                    MainActivity.sequence ++;
+                    MainActivity.sequence++;
                 }
             });
         }
@@ -193,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
                 @Override
                 public void run() {
                     evalScript(mLogView, getJavaScript(MainActivity.sequence, e.getMessage()));
-                    MainActivity.sequence ++;
+                    MainActivity.sequence++;
                 }
             });
         }

@@ -5,21 +5,21 @@ import androidx.room.Query;
 
 import java.util.List;
 
-import io.syslogic.sqlite.database.SqliteBaseHelper;
+import io.syslogic.sqlite.constants.Constants;
 import io.syslogic.sqlite.database.model.Attachment;
 
 @Dao
 public interface AttachmentDao {
 
-    @Query("SELECT * FROM " + SqliteBaseHelper.TABLE_ATTACHMENTS)
+    @Query("SELECT * FROM " + Constants.TABLE_ATTACHMENTS)
     List<Attachment> getItems();
 
-    @Query("SELECT * FROM " + SqliteBaseHelper.TABLE_ATTACHMENTS + " WHERE " + SqliteBaseHelper.KEY_ATTACHMENT_ID + " LIKE :itemId")
+    @Query("SELECT * FROM " + Constants.TABLE_ATTACHMENTS + " WHERE " + Constants.KEY_ATTACHMENT_ID + " LIKE :itemId")
     Attachment getItem(int itemId);
 
-    @Query("SELECT COUNT(*) FROM " + SqliteBaseHelper.TABLE_ATTACHMENTS)
+    @Query("SELECT COUNT(*) FROM " + Constants.TABLE_ATTACHMENTS)
     int getCount();
 
-    @Query("DELETE FROM " + SqliteBaseHelper.TABLE_ATTACHMENTS)
+    @Query("DELETE FROM " + Constants.TABLE_ATTACHMENTS)
     void deleteAll();
 }

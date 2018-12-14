@@ -6,6 +6,7 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
+import io.syslogic.sqlite.constants.Constants;
 import io.syslogic.sqlite.database.dao.AttachmentDao;
 import io.syslogic.sqlite.database.model.Attachment;
 
@@ -19,7 +20,7 @@ public abstract class Abstraction extends RoomDatabase {
     public static Abstraction getAbstraction(Context context) {
         if (sInstance == null) {
             sInstance = Room
-            .databaseBuilder(context.getApplicationContext(), Abstraction.class, "room.db")
+            .databaseBuilder(context.getApplicationContext(), Abstraction.class, Constants.DATABASE_NAME)
             .allowMainThreadQueries()
             .build();
         }

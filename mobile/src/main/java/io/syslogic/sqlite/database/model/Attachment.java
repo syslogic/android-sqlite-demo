@@ -3,17 +3,16 @@ package io.syslogic.sqlite.database.model;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+import io.syslogic.sqlite.constants.Constants;
 
-import io.syslogic.sqlite.database.SqliteBaseHelper;
-
-@Entity(tableName = SqliteBaseHelper.TABLE_ATTACHMENTS)
+@Entity(tableName = Constants.TABLE_ATTACHMENTS)
 public class Attachment {
 
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = SqliteBaseHelper.KEY_ATTACHMENT_ID)
+    @ColumnInfo(name = Constants.KEY_ATTACHMENT_ID)
     private int id;
 
-    @ColumnInfo(name = SqliteBaseHelper.KEY_ATTACHMENT_NAME)
+    @ColumnInfo(name = Constants.KEY_ATTACHMENT_NAME)
     private String name;
 
     public int getId() {
