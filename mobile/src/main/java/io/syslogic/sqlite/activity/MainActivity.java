@@ -2,9 +2,6 @@ package io.syslogic.sqlite.activity;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteException;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,10 +14,9 @@ import android.webkit.WebViewClient;
 
 import androidx.annotation.IdRes;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.room.Room;
 import androidx.sqlite.db.SupportSQLiteDatabase;
-
 import androidx.sqlite.db.SupportSQLiteOpenHelper;
+
 import io.syslogic.sqlite.BuildConfig;
 import io.syslogic.sqlite.R;
 import io.syslogic.sqlite.database.SqliteBaseHelper;
@@ -44,63 +40,38 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
         this.setWebView(R.id.sqlite_logs);
     }
 
-    /* when deleting the records, it works - else it accumulates the ROWID */
-    private void performSqliteTest(boolean deleteRecords, int methodId) {
+    /* it works when deleting the records, else it accumulates the ROWID */
+    private void performSqliteTest(int methodId) {
 
         SqliteBaseHelper db = SqliteBaseHelper.getInstance(this, this);
 
         db.insertSampleRecords(db.getWritableDatabase(),100);
         db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
 
-        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, deleteRecords, methodId);
+        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, true, methodId);
         db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
 
         db.insertSampleRecords(db.getWritableDatabase(),50);
         db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
 
-        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, deleteRecords, methodId);
+        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, true, methodId);
         db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
 
         db.insertSampleRecords(db.getWritableDatabase(),25);
         db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
 
-        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, deleteRecords, methodId);
+        db.resetAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS, true, methodId);
         db.getAutoIncrement(db.getWritableDatabase(), TABLE_ATTACHMENTS);
     }
 
-    /* when deleting the records, it works - else it accumulates the ROWID */
-    private void performRoomDbTest(boolean deleteRecords, int methodId) {
-
+    /* SupportSQLiteDatabase does not cut it ... */
+    private void performRoomDbTest() {
         Abstraction room = Abstraction.getAbstraction(this);
         SupportSQLiteOpenHelper helper = room.getOpenHelper();
         SupportSQLiteDatabase db = helper.getWritableDatabase();
-        int autoIncrement;
-
         this.insertSampleRecords(db,100);
-        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
-        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
-
-        this.resetAutoIncrement(db, TABLE_ATTACHMENTS, deleteRecords, methodId);
-        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
-        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
-
         this.insertSampleRecords(db, 50);
-        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
-        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
-
-        this.resetAutoIncrement(db, TABLE_ATTACHMENTS, deleteRecords, methodId);
-        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
-        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
-
         this.insertSampleRecords(db, 25);
-        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
-        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
-
-        this.resetAutoIncrement(db, TABLE_ATTACHMENTS, deleteRecords, methodId);
-        autoIncrement = room.sequenceDao().getSeq(TABLE_ATTACHMENTS);
-        this.onMessage("AUTOINCREMENT value: " + String.valueOf(autoIncrement) + "<hr/>");
-
-        helper.close();
     }
 
     public void insertSampleRecords(SupportSQLiteDatabase db, int itemCount) {
@@ -114,33 +85,6 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
             this.onException(e);
         } finally {
             this.onMessage("sample records added: " + String.valueOf(itemCount) + ".");
-        }
-    }
-
-    public void resetAutoIncrement(SupportSQLiteDatabase db, String tableName, boolean deleteRecords, int methodId) {
-        String sql = null;
-        if(deleteRecords) {
-            try {
-                sql = "DELETE FROM " + tableName + ";";
-                db.execSQL(sql);
-            } catch (android.database.SQLException e) {
-                this.onException(e);
-            } finally {
-                this.onMessage(sql);
-            }
-        }
-        try {
-            if(methodId == 0) {
-                sql = "UPDATE " + SqliteBaseHelper.TABLE_SQLITE_SEQUENCE + " SET seq=0 WHERE name=\"" + tableName + "\";";
-            } else {
-                sql = "DELETE FROM " + SqliteBaseHelper.TABLE_SQLITE_SEQUENCE + " WHERE name=\"" + tableName + "\";";
-            }
-            db.execSQL(sql);
-
-        } catch(android.database.SQLException e){
-            this.onException(e);
-        } finally {
-            this.onMessage(sql);
         }
     }
 
@@ -181,13 +125,12 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
             @Override
             public void onPageFinished(WebView view, String url) {
 
-                /* SQLiteDatabase */
-                performSqliteTest( true,0);
-                performSqliteTest( true,1);
+                /* SupportSQLiteDatabase - doesn't work */
+                performRoomDbTest();
 
-                /* SupportSQLiteDatabase */
-                performRoomDbTest(true,0);
-                performRoomDbTest(true,1);
+                /* SQLiteDatabase - works */
+                performSqliteTest(0);
+                // performSqliteTest(1);
             }
         });
     }

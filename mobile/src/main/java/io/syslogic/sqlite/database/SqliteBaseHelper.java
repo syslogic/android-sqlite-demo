@@ -11,7 +11,6 @@ import android.util.Log;
 
 import io.syslogic.sqlite.interfaces.ILogReceiver;
 
-
 public class SqliteBaseHelper extends SQLiteOpenHelper {
 
     private static final String LOG_TAG = SqliteBaseHelper.class.getSimpleName();
@@ -19,7 +18,7 @@ public class SqliteBaseHelper extends SQLiteOpenHelper {
     private static SQLiteDatabase db;
 
     /** Constants */
-    private static final String DATABASE_NAME            = "local.db";
+    private static final String DATABASE_NAME            = "room.db";
     private static final int DATABASE_VERSION            = 1;
 
     /** Tables */
