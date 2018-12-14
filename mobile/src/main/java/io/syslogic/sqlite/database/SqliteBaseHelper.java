@@ -19,16 +19,16 @@ public class SqliteBaseHelper extends SQLiteOpenHelper {
     private static SQLiteDatabase db;
 
     /** Constants */
-    private static final String DATABASE_NAME          = "local.db";
-    private static final int DATABASE_VERSION          = 1;
+    private static final String DATABASE_NAME         = "room.db";
+    private static final int DATABASE_VERSION         = 1;
 
     /** Tables */
-    private static final String TABLE_SQLITE_SEQUENCE  = "sqlite_sequence";
-    public static final String TABLE_ATTACHMENTS       = "attachment";
+    private static final String TABLE_SQLITE_SEQUENCE = "sqlite_sequence";
+    public static final String TABLE_ATTACHMENTS      = "attachment";
 
     /** Columns */
-    private static final String KEY_ATTACHMENT_ID      = "att_id";
-    private static final String KEY_ATTACHMENT_NAME    = "att_name";
+    public static final String KEY_ATTACHMENT_ID      = "attachment_id";
+    public static final String KEY_ATTACHMENT_NAME    = "attachment_name";
 
     private ILogReceiver mListener;
 
