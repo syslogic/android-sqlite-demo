@@ -185,8 +185,7 @@ public class MainActivity extends AppCompatActivity implements ILogReceiver {
     }
 
     @Override
-    public
-    void onException(final Exception e) {
+    public void onException(final Exception e) {
         Log.d(LOG_TAG, e.getMessage());
         if(this.mLogView != null) {
             this.runOnUiThread(new Runnable() {
